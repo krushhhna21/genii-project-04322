@@ -31,93 +31,24 @@ serve(async (req) => {
     console.log('Extracted text length:', extractedData.text.length);
     console.log('Document structure:', extractedData.structure);
 
-    // Call Lovable AI to generate the project content
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    // Enhanced multi-stage AI processing pipeline
+    const aiProcessingResult = await processWithEnhancedAI(studentData, extractedData, LOVABLE_API_KEY);
 
-    const aiPrompt = `You are an MSBTE diploma micro-project report generator AI. 
-Generate content for the topic: "${studentData.topic}".
+    // Validate and enhance content quality
+    const validatedContent = await validateAndEnhanceContent(aiProcessingResult, studentData, LOVABLE_API_KEY);
 
-CRITICAL - Follow this EXACT MSBTE structure:
+    // Check MSBTE compliance
+    const complianceCheck = await checkMSBTECompliance(validatedContent, studentData, LOVABLE_API_KEY);
 
-ANNEXURE I - MICRO PROJECT PROPOSAL:
-1. Aims/Benefits of the Micro-Project (2-3 paragraphs about benefits)
-2. Course Outcome Addressed (2-3 bullet points starting with a), b), c))
-3. Proposed Methodology (1-2 paragraphs explaining the approach)
+    // Final formatting
+    const finalContent = applyFinalFormatting(validatedContent, complianceCheck);
 
-ANNEXURE II - MICRO PROJECT REPORT:
-1. Rationale (1 paragraph explaining why this project is important)
-2. Aims/Benefits of the Micro-Project (3-4 bullet points with detailed benefits)
-3. Course Outcomes Achieved (2-3 bullet points starting with a), b), c))
-4. Literature Review (1 paragraph introducing the topic, then 4-6 bullet points with key concepts)
-5. Actual Methodology Followed (detailed explanation of implementation in 2-3 paragraphs)
-6. Skills Developed / Learning (4-5 bullet points of skills gained)
-7. Applications of this Micro-Project (4-5 bullet points of real-world applications)
+    console.log('Enhanced AI processing completed');
+    console.log('Quality score:', complianceCheck.qualityScore);
+    console.log('Compliance score:', complianceCheck.complianceScore);
 
-Student Information:
-Name: ${studentData.name}
-Roll No: ${studentData.rollNumber}
-Enrollment No: ${studentData.enrollmentNumber}
-College: ${studentData.college}
-
-Make the content technical, professional, relevant to ${studentData.topic}, and use formal academic language suitable for MSBTE diploma engineering.
-
-Format your response with clear section markers:
-## ANNEXURE_I_AIMS
-## ANNEXURE_I_COURSE_OUTCOME
-## ANNEXURE_I_METHODOLOGY
-## ANNEXURE_II_RATIONALE
-## ANNEXURE_II_AIMS
-## ANNEXURE_II_COURSE_OUTCOME
-## ANNEXURE_II_LITERATURE
-## ANNEXURE_II_METHODOLOGY
-## ANNEXURE_II_SKILLS
-## ANNEXURE_II_APPLICATIONS`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are an expert academic project report writer for engineering diploma students." },
-          { role: "user", content: aiPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const aiData = await response.json();
-    const generatedContent = aiData.choices[0].message.content;
-
-    console.log('Generated content length:', generatedContent.length);
-
-    // Parse AI generated content into MSBTE sections
-    const msbteContent = parseMSBTEContent(generatedContent);
+    // Parse final enhanced content into MSBTE sections
+    const msbteContent = parseMSBTEContent(finalContent);
     
     // Create Word document with MSBTE formatting
     const docChildren: any[] = [];
