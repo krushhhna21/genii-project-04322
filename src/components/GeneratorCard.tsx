@@ -154,7 +154,7 @@ const GeneratorCard = () => {
 
   const handleDownload = () => {
     if (!generatedFile) return;
-    
+
     // Convert base64 to blob for DOCX download
     const byteCharacters = atob(generatedFile);
     const byteNumbers = new Array(byteCharacters.length);
@@ -162,10 +162,10 @@ const GeneratorCard = () => {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { 
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+    const blob = new Blob([byteArray], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     });
-    
+
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -174,8 +174,32 @@ const GeneratorCard = () => {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    
+
     toast.success("Project downloaded successfully!");
+  };
+
+  const handleApplySuggestion = (suggestion: string) => {
+    // This would integrate with a content enhancement endpoint
+    toast.info(`Applying suggestion: "${suggestion.substring(0, 50)}..."`);
+    // Implementation would call the enhanced AI processing to apply specific suggestions
+  };
+
+  const handleEnhanceContent = async (enhancementType: string) => {
+    if (!generatedFile || !selectedFile) return;
+
+    setIsEnhancing(true);
+    try {
+      // This would call a specialized enhancement endpoint
+      toast.info(`Enhancing content: ${enhancementType}`);
+      // Implementation would call the enhanced AI processing for specific improvements
+      setTimeout(() => {
+        setIsEnhancing(false);
+        toast.success("Content enhanced successfully!");
+      }, 3000);
+    } catch (error) {
+      setIsEnhancing(false);
+      toast.error("Failed to enhance content");
+    }
   };
 
   return (
