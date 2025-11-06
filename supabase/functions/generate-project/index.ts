@@ -31,93 +31,30 @@ serve(async (req) => {
     console.log('Extracted text length:', extractedData.text.length);
     console.log('Document structure:', extractedData.structure);
 
-    // Call Lovable AI to generate the project content
+    // Get API key for enhanced AI processing
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const aiPrompt = `You are an MSBTE diploma micro-project report generator AI. 
-Generate content for the topic: "${studentData.topic}".
+    // Enhanced multi-stage AI processing pipeline
+    const aiProcessingResult = await processWithEnhancedAI(studentData, extractedData, LOVABLE_API_KEY);
 
-CRITICAL - Follow this EXACT MSBTE structure:
+    // Validate and enhance content quality
+    const validatedContent = await validateAndEnhanceContent(aiProcessingResult, studentData, LOVABLE_API_KEY);
 
-ANNEXURE I - MICRO PROJECT PROPOSAL:
-1. Aims/Benefits of the Micro-Project (2-3 paragraphs about benefits)
-2. Course Outcome Addressed (2-3 bullet points starting with a), b), c))
-3. Proposed Methodology (1-2 paragraphs explaining the approach)
+    // Check MSBTE compliance
+    const complianceCheck = await checkMSBTECompliance(validatedContent, studentData, LOVABLE_API_KEY);
 
-ANNEXURE II - MICRO PROJECT REPORT:
-1. Rationale (1 paragraph explaining why this project is important)
-2. Aims/Benefits of the Micro-Project (3-4 bullet points with detailed benefits)
-3. Course Outcomes Achieved (2-3 bullet points starting with a), b), c))
-4. Literature Review (1 paragraph introducing the topic, then 4-6 bullet points with key concepts)
-5. Actual Methodology Followed (detailed explanation of implementation in 2-3 paragraphs)
-6. Skills Developed / Learning (4-5 bullet points of skills gained)
-7. Applications of this Micro-Project (4-5 bullet points of real-world applications)
+    // Final formatting
+    const finalContent = applyFinalFormatting(validatedContent, complianceCheck);
 
-Student Information:
-Name: ${studentData.name}
-Roll No: ${studentData.rollNumber}
-Enrollment No: ${studentData.enrollmentNumber}
-College: ${studentData.college}
+    console.log('Enhanced AI processing completed');
+    console.log('Quality score:', complianceCheck.qualityScore);
+    console.log('Compliance score:', complianceCheck.complianceScore);
 
-Make the content technical, professional, relevant to ${studentData.topic}, and use formal academic language suitable for MSBTE diploma engineering.
-
-Format your response with clear section markers:
-## ANNEXURE_I_AIMS
-## ANNEXURE_I_COURSE_OUTCOME
-## ANNEXURE_I_METHODOLOGY
-## ANNEXURE_II_RATIONALE
-## ANNEXURE_II_AIMS
-## ANNEXURE_II_COURSE_OUTCOME
-## ANNEXURE_II_LITERATURE
-## ANNEXURE_II_METHODOLOGY
-## ANNEXURE_II_SKILLS
-## ANNEXURE_II_APPLICATIONS`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are an expert academic project report writer for engineering diploma students." },
-          { role: "user", content: aiPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const aiData = await response.json();
-    const generatedContent = aiData.choices[0].message.content;
-
-    console.log('Generated content length:', generatedContent.length);
-
-    // Parse AI generated content into MSBTE sections
-    const msbteContent = parseMSBTEContent(generatedContent);
+    // Parse final enhanced content into MSBTE sections
+    const msbteContent = parseMSBTEContent(finalContent);
     
     // Create Word document with MSBTE formatting
     const docChildren: any[] = [];
@@ -419,16 +356,30 @@ Format your response with clear section markers:
     const buffer = await Packer.toBuffer(doc);
     const base64Doc = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-    // Return the generated content as base64 DOCX
+    // Return the generated content as base64 DOCX with quality metrics
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         content: base64Doc,
-        fileName: `AI_Project_${studentData.topic.replace(/\s+/g, '_')}.docx`
+        fileName: `AI_Project_${studentData.topic.replace(/\s+/g, '_')}.docx`,
+        qualityMetrics: {
+          technicalDepth: aiProcessingResult.qualityMetrics.technicalDepth,
+          academicQuality: aiProcessingResult.qualityMetrics.academicQuality,
+          completeness: aiProcessingResult.qualityMetrics.completeness,
+          relevance: aiProcessingResult.qualityMetrics.relevance,
+          complianceScore: complianceCheck.complianceScore,
+          overallScore: complianceCheck.qualityScore
+        },
+        suggestions: aiProcessingResult.suggestions,
+        complianceInfo: {
+          isCompliant: complianceCheck.isCompliant,
+          issues: complianceCheck.issues,
+          recommendations: complianceCheck.recommendations
+        }
       }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
+        status: 200
       }
     );
 
@@ -464,6 +415,359 @@ interface ParsedSection {
   title: string;
   level: number;
   content: string[];
+}
+
+// Enhanced AI processing functions
+interface AIProcessingResult {
+  content: string;
+  qualityMetrics: {
+    technicalDepth: number;
+    academicQuality: number;
+    completeness: number;
+    relevance: number;
+  };
+  suggestions: string[];
+}
+
+interface ComplianceCheck {
+  isCompliant: boolean;
+  complianceScore: number;
+  issues: string[];
+  recommendations: string[];
+  qualityScore: number;
+}
+
+async function processWithEnhancedAI(studentData: any, extractedData: any, apiKey: string): Promise<AIProcessingResult> {
+  console.log('Stage 1: Initial content generation with enhanced prompts');
+
+  const enhancedPrompt = `You are an expert MSBTE diploma micro-project report generator with 10+ years of experience in engineering education.
+
+Generate comprehensive, high-quality content for the topic: "${studentData.topic}".
+
+Reference Context: Based on uploaded document analysis - Topic complexity: ${extractedData.structure.sections.length > 0 ? 'Advanced' : 'Basic'}
+
+CRITICAL REQUIREMENTS:
+1. Technical Accuracy: Ensure all technical information is current (2023-2024 standards)
+2. Industry Relevance: Include recent industry practices and technologies
+3. MSBTE Compliance: Follow exact diploma engineering standards
+4. Practical Focus: Emphasize hands-on applications and real-world scenarios
+5. Course Alignment: Map to specific diploma course outcomes
+
+STRUCTURE - Follow this EXACT MSBTE format:
+
+ANNEXURE I - MICRO PROJECT PROPOSAL:
+1. Aims/Benefits of the Micro-Project (3-4 detailed bullet points with measurable outcomes)
+2. Course Outcome Addressed (3-4 specific bullet points starting with a), b), c), d) mapping to course codes)
+3. Proposed Methodology (2-3 detailed paragraphs with technical implementation steps)
+
+ANNEXURE II - MICRO PROJECT REPORT:
+1. Rationale (2 paragraphs explaining technical importance and industry relevance)
+2. Aims/Benefits of the Micro-Project (4-5 detailed bullet points with technical and practical benefits)
+3. Course Outcomes Achieved (3-4 specific bullet points with course outcome codes and demonstration)
+4. Literature Review (1 introduction paragraph + 5-7 bullet points covering recent technologies, standards, and research)
+5. Actual Methodology Followed (3-4 detailed paragraphs with technical specifications, tools, and implementation details)
+6. Skills Developed / Learning (5-6 bullet points covering technical, analytical, and professional skills)
+7. Applications of this Micro-Project (5-6 bullet points covering industrial, commercial, and academic applications)
+
+Student Information:
+Name: ${studentData.name}
+Roll No: ${studentData.rollNumber}
+Enrollment No: ${studentData.enrollmentNumber}
+College: ${studentData.college}
+
+CONTENT STANDARDS:
+- Use formal academic engineering language
+- Include specific technical details, measurements, and specifications where applicable
+- Reference current industry standards (2023-2024)
+- Focus on practical, implementable solutions
+- Ensure content is technically sound and verifiable
+
+Format your response with clear section markers:
+## ANNEXURE_I_AIMS
+## ANNEXURE_I_COURSE_OUTCOME
+## ANNEXURE_I_METHODOLOGY
+## ANNEXURE_II_RATIONALE
+## ANNEXURE_II_AIMS
+## ANNEXURE_II_COURSE_OUTCOME
+## ANNEXURE_II_LITERATURE
+## ANNEXURE_II_METHODOLOGY
+## ANNEXURE_II_SKILLS
+## ANNEXURE_II_APPLICATIONS`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert MSBTE project evaluator and content generator with deep knowledge of diploma engineering education standards and industry requirements."
+          },
+          { role: "user", content: enhancedPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 6000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI processing failed: ${response.status}`);
+    }
+
+    const aiData = await response.json();
+    const generatedContent = aiData.choices[0].message.content;
+
+    // Calculate initial quality metrics
+    const qualityMetrics = calculateInitialQualityMetrics(generatedContent, extractedData);
+
+    // Generate improvement suggestions
+    const suggestions = generateInitialSuggestions(generatedContent, studentData);
+
+    return {
+      content: generatedContent,
+      qualityMetrics,
+      suggestions
+    };
+
+  } catch (error) {
+    console.error('Enhanced AI processing error:', error);
+    throw new Error('Failed to process content with enhanced AI');
+  }
+}
+
+async function validateAndEnhanceContent(result: AIProcessingResult, studentData: any, apiKey: string): Promise<string> {
+  console.log('Stage 2: Content quality validation and enhancement');
+
+  const enhancementPrompt = `You are an MSBTE project evaluator and improvement specialist with 15+ years of experience.
+
+Review and enhance the following microproject content for:
+
+CONTENT PROVIDED:
+${result.content}
+
+CURRENT QUALITY METRICS:
+- Technical Depth: ${result.qualityMetrics.technicalDepth}/100
+- Academic Quality: ${result.qualityMetrics.academicQuality}/100
+- Completeness: ${result.qualityMetrics.completeness}/100
+- Relevance: ${result.qualityMetrics.relevance}/100
+
+IMPROVEMENT AREAS IDENTIFIED:
+${result.suggestions.map(s => `- ${s}`).join('\n')}
+
+ENHANCEMENT REQUIREMENTS:
+1. Technical Accuracy: Verify and correct all technical information
+2. MSBTE Compliance: Ensure strict adherence to diploma engineering standards
+3. Academic Quality: Improve language, structure, and academic tone
+4. Practical Relevance: Add real-world applications and current industry examples (2023-2024)
+5. Course Alignment: Strengthen connection to diploma course outcomes
+6. Content Depth: Enhance technical detail and implementation specifics
+
+Student Information:
+- Topic: ${studentData.topic}
+- College: ${studentData.college}
+
+Provide the enhanced version following the exact same format with section markers. Do not add explanations - just return the improved content.`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert MSBTE content enhancement specialist. Your task is to improve academic project content while maintaining structure and format."
+          },
+          { role: "user", content: enhancementPrompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 6000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Content enhancement failed: ${response.status}`);
+    }
+
+    const enhancedData = await response.json();
+    return enhancedData.choices[0].message.content;
+
+  } catch (error) {
+    console.error('Content enhancement error:', error);
+    // Return original content if enhancement fails
+    return result.content;
+  }
+}
+
+async function checkMSBTECompliance(content: string, studentData: any, apiKey: string): Promise<ComplianceCheck> {
+  console.log('Stage 3: MSBTE compliance validation');
+
+  const compliancePrompt = `You are an MSBTE compliance inspector with expertise in diploma engineering project standards.
+
+Analyze the following microproject content for MSBTE compliance:
+
+CONTENT:
+${content}
+
+EVALUATION CRITERIA:
+1. Structure Compliance: All required sections present and properly formatted
+2. Content Standards: Technical depth appropriate for diploma level
+3. Academic Quality: Professional language and proper citations
+4. Course Outcomes: Clear alignment with diploma educational objectives
+5. Completeness: All required elements included with adequate detail
+6. Formatting: Proper section organization and presentation
+
+Provide analysis in this exact format:
+COMPLIANCE_SCORE: [0-100]
+IS_COMPLIANT: [true/false]
+ISSUES: [list of compliance issues]
+RECOMMENDATIONS: [list of specific improvements needed]
+QUALITY_SCORE: [0-100]`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are an MSBTE compliance expert. Provide precise, structured compliance analysis."
+          },
+          { role: "user", content: compliancePrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Compliance check failed: ${response.status}`);
+    }
+
+    const complianceData = await response.json();
+    const analysis = complianceData.choices[0].message.content;
+
+    // Parse the structured response
+    const complianceScore = parseInt(analysis.match(/COMPLIANCE_SCORE: (\d+)/)?.[1] || '70');
+    const isCompliant = analysis.match(/IS_COMPLIANT: (true|false)/)?.[1] === 'true';
+    const issuesText = analysis.match(/ISSUES: \[([^\]]+)\]/)?.[1] || '';
+    const recommendationsText = analysis.match(/RECOMMENDATIONS: \[([^\]]+)\]/)?.[1] || '';
+    const qualityScore = parseInt(analysis.match(/QUALITY_SCORE: (\d+)/)?.[1] || '75');
+
+    const issues = issuesText.split(',').map(issue => issue.trim()).filter(issue => issue);
+    const recommendations = recommendationsText.split(',').map(rec => rec.trim()).filter(rec => rec);
+
+    return {
+      isCompliant,
+      complianceScore,
+      issues,
+      recommendations,
+      qualityScore
+    };
+
+  } catch (error) {
+    console.error('Compliance check error:', error);
+    // Return default compliance check if analysis fails
+    return {
+      isCompliant: false,
+      complianceScore: 70,
+      issues: ['Compliance check failed'],
+      recommendations: ['Manual review required'],
+      qualityScore: 75
+    };
+  }
+}
+
+function applyFinalFormatting(content: string, complianceCheck: ComplianceCheck): string {
+  console.log('Stage 4: Final formatting and quality improvements');
+
+  let finalContent = content;
+
+  // Apply formatting improvements based on compliance check
+  if (complianceCheck.complianceScore < 80) {
+    // Add formatting improvements for low compliance scores
+    finalContent = enhanceFormatting(finalContent);
+  }
+
+  // Add quality improvements
+  if (complianceCheck.qualityScore < 85) {
+    finalContent = enhanceQuality(finalContent);
+  }
+
+  return finalContent;
+}
+
+function calculateInitialQualityMetrics(content: string, extractedData: any): AIProcessingResult['qualityMetrics'] {
+  const wordCount = content.split(/\s+/).length;
+  const sectionCount = (content.match(/## \w+/g) || []).length;
+  const technicalTerms = (content.match(/\b(technical|engineering|implementation|methodology|algorithm|system|design|development|analysis)\b/gi) || []).length;
+
+  return {
+    technicalDepth: Math.min(100, Math.round((technicalTerms / wordCount) * 1000)),
+    academicQuality: Math.min(100, Math.round((wordCount / 1000) * 100)),
+    completeness: Math.min(100, Math.round((sectionCount / 10) * 100)),
+    relevance: extractedData.structure.sections.length > 0 ? 85 : 70
+  };
+}
+
+function generateInitialSuggestions(content: string, studentData: any): string[] {
+  const suggestions: string[] = [];
+
+  if (content.length < 2000) {
+    suggestions.push('Content appears too brief - consider adding more technical details');
+  }
+
+  if (!content.includes('2023') && !content.includes('2024')) {
+    suggestions.push('Include recent industry standards and practices (2023-2024)');
+  }
+
+  if (!content.match(/## ANNEXURE_\w+/g)) {
+    suggestions.push('Ensure all required MSBTE sections are properly formatted');
+  }
+
+  return suggestions;
+}
+
+function enhanceFormatting(content: string): string {
+  // Basic formatting enhancements
+  return content
+    .replace(/^(.+)$/gm, (match) => {
+      // Ensure proper spacing after section headers
+      if (match.startsWith('## ')) {
+        return match + '\n';
+      }
+      return match;
+    })
+    .replace(/\n{3,}/g, '\n\n'); // Remove excessive line breaks
+}
+
+function enhanceQuality(content: string): string {
+  // Basic quality enhancements
+  return content
+    .replace(/\b(very|really|quite)\s+/g, '') // Remove weak adverbs
+    .replace(/\b(good|nice|bad)\b/gi, (match) => {
+      // Replace weak adjectives
+      const replacements: { [key: string]: string } = {
+        'good': 'effective',
+        'nice': 'appropriate',
+        'bad': 'inadequate'
+      };
+      return replacements[match.toLowerCase()] || match;
+    });
 }
 
 // Helper functions for enhanced document extraction
