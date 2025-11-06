@@ -31,6 +31,12 @@ serve(async (req) => {
     console.log('Extracted text length:', extractedData.text.length);
     console.log('Document structure:', extractedData.structure);
 
+    // Get API key for enhanced AI processing
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
     // Enhanced multi-stage AI processing pipeline
     const aiProcessingResult = await processWithEnhancedAI(studentData, extractedData, LOVABLE_API_KEY);
 
