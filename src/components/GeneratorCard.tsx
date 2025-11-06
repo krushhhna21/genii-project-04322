@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Download, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Download, Sparkles, BarChart3, Lightbulb, FileText, Settings } from "lucide-react";
 import FileUpload from "./FileUpload";
 import StudentForm from "./StudentForm";
+import QualityIndicator from "./QualityIndicator";
+import AISuggestions from "./AISuggestions";
 import { toast } from "sonner";
 
 const GeneratorCard = () => {
