@@ -122,6 +122,33 @@ Format your response with clear section markers:
     // Create Word document with MSBTE formatting
     const docChildren: any[] = [];
     
+    // Cover Page with College Name
+    docChildren.push(
+      new Paragraph({
+        text: studentData.college,
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 600 },
+      }),
+      new Paragraph({
+        text: "Micro Project Report",
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: studentData.topic,
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 600 },
+      }),
+      new Paragraph({
+        text: "",
+        spacing: { after: 400 },
+        pageBreakBefore: true,
+      })
+    );
+    
     // Index Page
     docChildren.push(
       new Paragraph({
@@ -263,6 +290,18 @@ Format your response with clear section markers:
           new TextRun({ text: "Enrollment Number: ", bold: true }),
           new TextRun({ text: studentData.enrollmentNumber }),
         ],
+        spacing: { after: 600 },
+      }),
+      new Paragraph({
+        text: "",
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: "_______________________",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "Name and Signature of the Teacher",
         spacing: { after: 400 },
       }),
       new Paragraph({
