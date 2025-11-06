@@ -39,6 +39,10 @@ const GeneratorCard = () => {
     enrollmentNumber: "",
     college: "",
     topic: "",
+    branch: "",
+    semester: "",
+    category: "",
+    complexity: "",
   });
 
   const handleFormChange = (field: string, value: string) => {
