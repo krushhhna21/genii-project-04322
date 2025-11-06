@@ -24,8 +24,11 @@ interface FileAnalysis {
   overallQuality: 'good' | 'fair' | 'needs_improvement';
 }
 
-const FileUpload = ({ onFileSelect, selectedFile }: FileUploadProps) => {
+const FileUpload = ({ onFileSelect, selectedFile, onFileAnalysis }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [fileAnalysis, setFileAnalysis] = useState<FileAnalysis | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
