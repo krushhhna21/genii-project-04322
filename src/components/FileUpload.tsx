@@ -1,6 +1,10 @@
-import { Upload, FileText, X } from "lucide-react";
-import { useState, useRef } from "react";
+import { Upload, FileText, X, CheckCircle2, AlertCircle, Info, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FileUploadProps {
   onFileSelect: (file: File | null) => void;
