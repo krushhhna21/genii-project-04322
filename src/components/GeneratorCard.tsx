@@ -9,10 +9,30 @@ import QualityIndicator from "./QualityIndicator";
 import AISuggestions from "./AISuggestions";
 import { toast } from "sonner";
 
+interface QualityMetrics {
+  technicalDepth: number;
+  academicQuality: number;
+  completeness: number;
+  relevance: number;
+  complianceScore: number;
+  overallScore: number;
+}
+
+interface ComplianceInfo {
+  isCompliant: boolean;
+  issues: string[];
+  recommendations: string[];
+}
+
 const GeneratorCard = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedFile, setGeneratedFile] = useState<string | null>(null);
+  const [qualityMetrics, setQualityMetrics] = useState<QualityMetrics | null>(null);
+  const [complianceInfo, setComplianceInfo] = useState<ComplianceInfo | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [activeTab, setActiveTab] = useState("generate");
   const [formData, setFormData] = useState({
     name: "",
     rollNumber: "",
