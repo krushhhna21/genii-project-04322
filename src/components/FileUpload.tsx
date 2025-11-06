@@ -9,6 +9,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface FileUploadProps {
   onFileSelect: (file: File | null) => void;
   selectedFile: File | null;
+  onFileAnalysis?: (analysis: FileAnalysis) => void;
+}
+
+interface FileAnalysis {
+  extractedText: string;
+  keyTopics: string[];
+  suggestedProjectTopics: string[];
+  technicalComplexity: 'basic' | 'intermediate' | 'advanced';
+  pageCount?: number;
+  wordCount?: number;
+  hasImages: boolean;
+  hasTables: boolean;
+  overallQuality: 'good' | 'fair' | 'needs_improvement';
 }
 
 const FileUpload = ({ onFileSelect, selectedFile }: FileUploadProps) => {
