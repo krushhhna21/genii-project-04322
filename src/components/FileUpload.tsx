@@ -63,11 +63,154 @@ const FileUpload = ({ onFileSelect, selectedFile, onFileAnalysis }: FileUploadPr
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
-    return validTypes.includes(file.type);
+
+    // Check file type
+    if (!validTypes.includes(file.type)) {
+      return false;
+    }
+
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const getFileValidationMessage = (file: File) => {
+    const validTypes = [
+      { type: 'application/pdf', name: 'PDF' },
+      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: 'DOCX' },
+      { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', name: 'PPTX' }
+    ];
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!validTypes.some(vt => vt.type === file.type)) {
+      return 'Invalid file type. Please upload PDF, DOCX, or PPTX files only.';
+    }
+
+    if (file.size > maxSize) {
+      return 'File size exceeds 10MB limit. Please compress or choose a smaller file.';
+    }
+
+    return null;
+  };
+
+  const analyzeFile = async (file: File) => {
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+
+    try {
+      // Simulate file analysis progress
+      const progressSteps = [
+        { progress: 20, message: 'Reading file content...' },
+        { progress: 40, message: 'Extracting text...' },
+        { progress: 60, message: 'Analyzing structure...' },
+        { progress: 80, message: 'Identifying key topics...' },
+        { progress: 100, message: 'Generating suggestions...' }
+      ];
+
+      for (const step of progressSteps) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setAnalysisProgress(step.progress);
+      }
+
+      // Simulate file analysis results
+      const analysis: FileAnalysis = {
+        extractedText: 'Sample extracted text from the document...',
+        keyTopics: generateKeyTopics(file.name, file.type),
+        suggestedProjectTopics: generateProjectSuggestions(file.name, file.type),
+        technicalComplexity: file.size > 2 * 1024 * 1024 ? 'intermediate' : 'basic',
+        pageCount: file.type === 'application/pdf' ? Math.floor(Math.random() * 20) + 5 : undefined,
+        wordCount: Math.floor(file.size / 10),
+        hasImages: file.size > 1024 * 1024,
+        hasTables: file.type.includes('wordprocessingml'),
+        overallQuality: file.size > 500 * 1024 ? 'good' : 'fair'
+      };
+
+      setFileAnalysis(analysis);
+      if (onFileAnalysis) {
+        onFileAnalysis(analysis);
+      }
+    } catch (error) {
+      console.error('File analysis error:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const generateKeyTopics = (fileName: string, fileType: string): string[] => {
+    const topics = [
+      'Software Development',
+      'Data Structures',
+      'Web Technologies',
+      'Database Management',
+      'Network Security',
+      'Machine Learning',
+      'Cloud Computing',
+      'Mobile Development',
+      'IoT Systems',
+      'Cybersecurity'
+    ];
+
+    // Return random 3-5 topics based on file characteristics
+    const topicCount = Math.floor(Math.random() * 3) + 3;
+    return topics.slice(0, topicCount);
+  };
+
+  const generateProjectSuggestions = (fileName: string, fileType: string): string[] => {
+    const suggestions = [
+      'Student Management System',
+      'E-Learning Platform',
+      'Inventory Management System',
+      'Real-time Chat Application',
+      'Weather Forecasting System',
+      'Online Examination Portal',
+      'Library Management System',
+      'Hospital Management System',
+      'Bank Management System',
+      'E-Commerce Website'
+    ];
+
+    // Return random 2-4 suggestions
+    const suggestionCount = Math.floor(Math.random() * 3) + 2;
+    return suggestions.slice(0, suggestionCount);
+  };
+
+  const handleFileSelect = async (file: File) => {
+    const validationError = getFileValidationMessage(file);
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
+    onFileSelect(file);
+    setFileAnalysis(null);
+    await analyzeFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
   };
 
   const handleRemove = () => {
     onFileSelect(null);
+    setFileAnalysis(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
