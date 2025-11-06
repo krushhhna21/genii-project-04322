@@ -356,16 +356,30 @@ serve(async (req) => {
     const buffer = await Packer.toBuffer(doc);
     const base64Doc = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-    // Return the generated content as base64 DOCX
+    // Return the generated content as base64 DOCX with quality metrics
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         content: base64Doc,
-        fileName: `AI_Project_${studentData.topic.replace(/\s+/g, '_')}.docx`
+        fileName: `AI_Project_${studentData.topic.replace(/\s+/g, '_')}.docx`,
+        qualityMetrics: {
+          technicalDepth: aiProcessingResult.qualityMetrics.technicalDepth,
+          academicQuality: aiProcessingResult.qualityMetrics.academicQuality,
+          completeness: aiProcessingResult.qualityMetrics.completeness,
+          relevance: aiProcessingResult.qualityMetrics.relevance,
+          complianceScore: complianceCheck.complianceScore,
+          overallScore: complianceCheck.qualityScore
+        },
+        suggestions: aiProcessingResult.suggestions,
+        complianceInfo: {
+          isCompliant: complianceCheck.isCompliant,
+          issues: complianceCheck.issues,
+          recommendations: complianceCheck.recommendations
+        }
       }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
+        status: 200
       }
     );
 
