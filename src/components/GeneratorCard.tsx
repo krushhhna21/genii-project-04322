@@ -207,48 +207,127 @@ const GeneratorCard = () => {
       <CardHeader className="space-y-1 pb-6">
         <CardTitle className="text-2xl font-bold flex items-center gap-2">
           <Sparkles className="w-6 h-6 text-primary" />
-          Generate Your Project
+          AI-Powered MSBTE Project Builder
         </CardTitle>
         <CardDescription className="text-base">
-          Upload your reference document and fill in your details to generate a professional project report
+          Generate professional MSBTE project reports with AI quality enhancement and compliance validation
         </CardDescription>
       </CardHeader>
-      
-      <CardContent className="space-y-6">
-        <FileUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} />
-        
-        <StudentForm formData={formData} onChange={handleFormChange} />
 
-        <div className="pt-4 space-y-4">
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow hover:shadow-elevated transition-all duration-300"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generating Your Project...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Generate Project
-              </>
-            )}
-          </Button>
-
-          {generatedFile && (
-            <Button
-              onClick={handleDownload}
-              variant="secondary"
-              className="w-full h-12 text-base font-semibold animate-fade-in"
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="generate" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Generate
+            </TabsTrigger>
+            <TabsTrigger
+              value="quality"
+              disabled={!qualityMetrics}
+              className="flex items-center gap-2"
             >
-              <Download className="w-5 h-5 mr-2" />
-              Download Project
-            </Button>
-          )}
-        </div>
+              <BarChart3 className="w-4 h-4" />
+              Quality Metrics
+            </TabsTrigger>
+            <TabsTrigger
+              value="suggestions"
+              disabled={suggestions.length === 0}
+              className="flex items-center gap-2"
+            >
+              <Lightbulb className="w-4 h-4" />
+              AI Suggestions
+              {suggestions.length > 0 && (
+                <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
+                  {suggestions.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="generate" className="space-y-6">
+            <FileUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} />
+
+            <StudentForm formData={formData} onChange={handleFormChange} />
+
+            <div className="pt-4 space-y-4">
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow hover:shadow-elevated transition-all duration-300"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Generating Your Project with AI Enhancement...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Generate Enhanced Project
+                  </>
+                )}
+              </Button>
+
+              {generatedFile && (
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleDownload}
+                    variant="secondary"
+                    className="w-full h-12 text-base font-semibold"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download Project (DOCX)
+                  </Button>
+
+                  {qualityMetrics && (
+                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                      <span>Quality Score: {qualityMetrics.overallScore}/100</span>
+                      <span>•</span>
+                      <span>MSBTE Compliance: {complianceInfo?.complianceScore || 0}/100</span>
+                      <span>•</span>
+                      <span className="text-primary cursor-pointer hover:underline">
+                        View Details
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="quality" className="mt-0">
+            {qualityMetrics && complianceInfo ? (
+              <QualityIndicator
+                qualityMetrics={qualityMetrics}
+                complianceInfo={complianceInfo}
+                showDetails={true}
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4" />
+                <p className="text-lg font-medium">Generate a project first</p>
+                <p className="text-sm">Quality metrics will appear here after generation</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="suggestions" className="mt-0">
+            {suggestions.length > 0 ? (
+              <AISuggestions
+                suggestions={suggestions}
+                onApplySuggestion={handleApplySuggestion}
+                onEnhanceContent={handleEnhanceContent}
+                isProcessing={isEnhancing}
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Lightbulb className="w-12 h-12 mx-auto mb-4" />
+                <p className="text-lg font-medium">No suggestions available</p>
+                <p className="text-sm">AI suggestions will appear here after generation</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
