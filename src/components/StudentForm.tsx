@@ -23,6 +23,10 @@ interface StudentFormProps {
     enrollmentNumber: string;
     college: string;
     topic: string;
+    branch?: string;
+    semester?: string;
+    category?: string;
+    complexity?: string;
   };
   onChange: (field: string, value: string) => void;
 }
