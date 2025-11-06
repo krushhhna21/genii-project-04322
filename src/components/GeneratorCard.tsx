@@ -116,6 +116,18 @@ const GeneratorCard = () => {
           if (data.success) {
             toast.success("Project generated successfully!");
             setGeneratedFile(data.content);
+
+            // Set quality metrics and suggestions if available
+            if (data.qualityMetrics) {
+              setQualityMetrics(data.qualityMetrics);
+            }
+            if (data.suggestions) {
+              setSuggestions(data.suggestions);
+              setActiveTab("suggestions"); // Switch to suggestions tab
+            }
+            if (data.complianceInfo) {
+              setComplianceInfo(data.complianceInfo);
+            }
           } else {
             throw new Error(data.error || 'Generation failed');
           }
