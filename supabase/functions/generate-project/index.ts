@@ -37,18 +37,24 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const aiPrompt = `You are an MSBTE diploma project generator AI. 
-Generate a complete mini project report for the topic: "${studentData.topic}".
+    const aiPrompt = `You are an MSBTE diploma micro-project report generator AI. 
+Generate content for the topic: "${studentData.topic}".
 
-Use this reference content as structure and inspiration: ${extractedData.text.substring(0, 5000)}
+CRITICAL - Follow this EXACT MSBTE structure:
 
-CRITICAL: Match the exact structure and section organization from the reference document.
-The reference has these sections: ${extractedData.structure.sections.map(s => s.title).join(', ')}
+ANNEXURE I - MICRO PROJECT PROPOSAL:
+1. Aims/Benefits of the Micro-Project (2-3 paragraphs about benefits)
+2. Course Outcome Addressed (2-3 bullet points starting with a), b), c))
+3. Proposed Methodology (1-2 paragraphs explaining the approach)
 
-Generate content for each section matching the reference structure. For each section:
-- Use the same heading style and level as the reference
-- Match the approximate length and detail level
-- Keep the same organizational flow
+ANNEXURE II - MICRO PROJECT REPORT:
+1. Rationale (1 paragraph explaining why this project is important)
+2. Aims/Benefits of the Micro-Project (3-4 bullet points with detailed benefits)
+3. Course Outcomes Achieved (2-3 bullet points starting with a), b), c))
+4. Literature Review (1 paragraph introducing the topic, then 4-6 bullet points with key concepts)
+5. Actual Methodology Followed (detailed explanation of implementation in 2-3 paragraphs)
+6. Skills Developed / Learning (4-5 bullet points of skills gained)
+7. Applications of this Micro-Project (4-5 bullet points of real-world applications)
 
 Student Information:
 Name: ${studentData.name}
@@ -56,8 +62,19 @@ Roll No: ${studentData.rollNumber}
 Enrollment No: ${studentData.enrollmentNumber}
 College: ${studentData.college}
 
-Make the content technical, professional, and relevant to the topic. Use formal academic language.
-Format your response with clear section markers using "## SECTION: [Section Name]" for each major heading.`;
+Make the content technical, professional, relevant to ${studentData.topic}, and use formal academic language suitable for MSBTE diploma engineering.
+
+Format your response with clear section markers:
+## ANNEXURE_I_AIMS
+## ANNEXURE_I_COURSE_OUTCOME
+## ANNEXURE_I_METHODOLOGY
+## ANNEXURE_II_RATIONALE
+## ANNEXURE_II_AIMS
+## ANNEXURE_II_COURSE_OUTCOME
+## ANNEXURE_II_LITERATURE
+## ANNEXURE_II_METHODOLOGY
+## ANNEXURE_II_SKILLS
+## ANNEXURE_II_APPLICATIONS`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -99,112 +116,258 @@ Format your response with clear section markers using "## SECTION: [Section Name
 
     console.log('Generated content length:', generatedContent.length);
 
-    // Parse the generated content into structured sections
-    const sections = parseGeneratedContent(generatedContent, extractedData.structure);
+    // Parse AI generated content into MSBTE sections
+    const msbteContent = parseMSBTEContent(generatedContent);
     
-    // Create a Word document matching the reference formatting
+    // Create Word document with MSBTE formatting
     const docChildren: any[] = [];
     
-    // Cover Page
+    // Index Page
     docChildren.push(
       new Paragraph({
-        text: studentData.college,
+        text: "Index",
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: "",
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: "Sr. No.\tContents\t\t\t\t\tPage No.",
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: "\tAnnexure I – Micro Project Proposal\t\t1-2",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "1\t1. Aims/Benefits of the Micro-Project\t\t1",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t2. Course Outcome Addressed\t\t\t1",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t3. Proposed Methodology\t\t\t\t1",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\tAnnexure II – Micro Project Report\t\t3-9",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "2\t1. Rationale\t\t\t\t\t3",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t2. Aims/Benefits of the Micro-Project\t\t3",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t3. Course Outcome Achieved\t\t\t3",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t4. Literature Review\t\t\t\t4",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t5. Actual Methodology Followed\t\t\t5",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t6. Skills Developed / Learning\t\t\t6",
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        text: "\t7. Applications of this Micro-Project\t\t7",
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: "",
+        pageBreakBefore: true,
+      })
+    );
+    
+    // Annexure I - Micro Project Proposal
+    docChildren.push(
+      new Paragraph({
+        text: "Annexure I",
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: "Micro Project Proposal",
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
         spacing: { after: 400 },
       }),
       new Paragraph({
         text: studentData.topic,
-        heading: HeadingLevel.HEADING_2,
+        heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
-        spacing: { after: 600 },
+        spacing: { after: 400 },
       }),
       new Paragraph({
-        children: [
-          new TextRun({ 
-            text: "Submitted by:", 
-            bold: true, 
-            size: extractedData.structure.defaultFontSize || 24 
-          }),
-        ],
+        text: "1. Aims/Benefits of the Micro-Project:",
+        heading: HeadingLevel.HEADING_1,
         spacing: { before: 400, after: 200 },
       }),
       new Paragraph({
-        text: `Name: ${studentData.name}`,
+        text: msbteContent.annexure1.aims,
+        spacing: { after: 300 },
+      }),
+      new Paragraph({
+        text: "2. Course Outcome Addressed:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      ...msbteContent.annexure1.courseOutcome.map((item: string) => 
+        new Paragraph({
+          text: item,
+          spacing: { after: 100 },
+        })
+      ),
+      new Paragraph({
+        text: "3. Proposed Methodology:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      new Paragraph({
+        text: msbteContent.annexure1.methodology,
+        spacing: { after: 300 },
+      }),
+      new Paragraph({
+        text: "",
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Name: ", bold: true }),
+          new TextRun({ text: studentData.name }),
+        ],
         spacing: { after: 100 },
       }),
       new Paragraph({
-        text: `Roll Number: ${studentData.rollNumber}`,
+        children: [
+          new TextRun({ text: "Roll Number: ", bold: true }),
+          new TextRun({ text: studentData.rollNumber }),
+        ],
         spacing: { after: 100 },
       }),
       new Paragraph({
-        text: `Enrollment Number: ${studentData.enrollmentNumber}`,
+        children: [
+          new TextRun({ text: "Enrollment Number: ", bold: true }),
+          new TextRun({ text: studentData.enrollmentNumber }),
+        ],
         spacing: { after: 400 },
       }),
       new Paragraph({
         text: "",
-        spacing: { after: 400 },
         pageBreakBefore: true,
       })
     );
     
-    // Add Table of Contents if reference had one
-    if (extractedData.structure.hasTableOfContents) {
-      docChildren.push(
+    // Annexure II - Micro Project Report
+    docChildren.push(
+      new Paragraph({
+        text: "Annexure – II",
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: "Micro-Project Report",
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: studentData.topic,
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }),
+      new Paragraph({
+        text: "1. Rationale:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      new Paragraph({
+        text: msbteContent.annexure2.rationale,
+        spacing: { after: 300 },
+      }),
+      new Paragraph({
+        text: "2. Aims/Benefits of the Micro-Project:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      ...msbteContent.annexure2.aims.map((item: string) => 
         new Paragraph({
-          text: "Table of Contents",
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 400 },
-        }),
-        new TableOfContents("Table of Contents", {
-          hyperlink: true,
-          headingStyleRange: "1-3",
-        }),
-        new Paragraph({
-          text: "",
-          spacing: { after: 400 },
-          pageBreakBefore: true,
+          text: item,
+          spacing: { after: 100 },
         })
-      );
-    }
-    
-    // Add content sections with matching formatting
-    sections.forEach((section: ParsedSection) => {
-      const refSection = extractedData.structure.sections.find(s => 
-        s.title.toLowerCase().includes(section.title.toLowerCase()) ||
-        section.title.toLowerCase().includes(s.title.toLowerCase())
-      );
-      
-      const headingLevel = refSection?.level || section.level;
-      const fontSize = refSection?.fontSize || extractedData.structure.defaultFontSize || 24;
-      
-      // Add section heading
-      docChildren.push(
+      ),
+      new Paragraph({
+        text: "3. Course Outcomes Achieved:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      ...msbteContent.annexure2.courseOutcome.map((item: string) => 
         new Paragraph({
-          text: section.title,
-          heading: mapToHeadingLevel(headingLevel),
-          spacing: { before: 400, after: 200 },
+          text: item,
+          spacing: { after: 100 },
         })
-      );
-      
-      // Add section content paragraphs
-      section.content.forEach((para: string) => {
-        if (para.trim()) {
-          docChildren.push(
-            new Paragraph({
-              children: [
-                new TextRun({ 
-                  text: para, 
-                  size: fontSize - 4 // Body text slightly smaller than headings
-                })
-              ],
-              spacing: { before: 100, after: 100 },
-            })
-          );
-        }
-      });
-    });
+      ),
+      new Paragraph({
+        text: "4. Literature Review:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      new Paragraph({
+        text: msbteContent.annexure2.literatureIntro,
+        spacing: { after: 200 },
+      }),
+      ...msbteContent.annexure2.literaturePoints.map((item: string) => 
+        new Paragraph({
+          text: item,
+          spacing: { after: 100 },
+        })
+      ),
+      new Paragraph({
+        text: "5. Actual Methodology Followed:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      new Paragraph({
+        text: msbteContent.annexure2.methodology,
+        spacing: { after: 300 },
+      }),
+      new Paragraph({
+        text: "6. Skills Developed / Learning out of this Micro-Project:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      ...msbteContent.annexure2.skills.map((item: string) => 
+        new Paragraph({
+          text: item,
+          spacing: { after: 100 },
+        })
+      ),
+      new Paragraph({
+        text: "7. Applications of this Micro-Project:",
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      }),
+      ...msbteContent.annexure2.applications.map((item: string) => 
+        new Paragraph({
+          text: item,
+          spacing: { after: 100 },
+        })
+      )
+    );
 
     const doc = new Document({
       sections: [{
@@ -362,55 +525,96 @@ async function extractFromPPTX(base64Content: string): Promise<{ text: string; s
   };
 }
 
-function parseGeneratedContent(content: string, structure: DocumentStructure): ParsedSection[] {
-  const sections: ParsedSection[] = [];
-  
-  // Split by section markers
-  const sectionPattern = /## SECTION: ([^\n]+)\n/g;
-  const parts = content.split(sectionPattern);
-  
-  // If AI didn't use section markers, fall back to detecting headings
-  if (parts.length === 1) {
-    const lines = content.split('\n');
-    let currentSection: ParsedSection | null = null;
-    
-    lines.forEach(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return;
-      
-      // Detect if line is a heading
-      const isHeading = trimmed.startsWith('#') || 
-                       (trimmed === trimmed.toUpperCase() && trimmed.length < 100 && trimmed.length > 3) ||
-                       /^\d+\.?\s+[A-Z]/.test(trimmed);
-      
-      if (isHeading) {
-        if (currentSection) sections.push(currentSection);
-        currentSection = {
-          title: trimmed.replace(/^#+\s*/, '').replace(/^\d+\.?\s*/, ''),
-          level: trimmed.startsWith('##') ? 2 : 1,
-          content: []
-        };
-      } else if (currentSection) {
-        currentSection.content.push(trimmed);
-      }
-    });
-    
-    if (currentSection) sections.push(currentSection);
-  } else {
-    // Parse sections from markers
-    for (let i = 1; i < parts.length; i += 2) {
-      sections.push({
-        title: parts[i].trim(),
-        level: 1,
-        content: parts[i + 1]?.split('\n').filter(l => l.trim()) || []
-      });
-    }
-  }
-  
-  return sections;
+interface MSBTEContent {
+  annexure1: {
+    aims: string;
+    courseOutcome: string[];
+    methodology: string;
+  };
+  annexure2: {
+    rationale: string;
+    aims: string[];
+    courseOutcome: string[];
+    literatureIntro: string;
+    literaturePoints: string[];
+    methodology: string;
+    skills: string[];
+    applications: string[];
+  };
 }
 
-function mapToHeadingLevel(level: number): HeadingLevel {
+function parseMSBTEContent(content: string): MSBTEContent {
+  const result: MSBTEContent = {
+    annexure1: {
+      aims: '',
+      courseOutcome: [],
+      methodology: ''
+    },
+    annexure2: {
+      rationale: '',
+      aims: [],
+      courseOutcome: [],
+      literatureIntro: '',
+      literaturePoints: [],
+      methodology: '',
+      skills: [],
+      applications: []
+    }
+  };
+  
+  // Extract sections using markers
+  const extractSection = (marker: string): string => {
+    const pattern = new RegExp(`## ${marker}\\s*\\n([\\s\\S]*?)(?=##|$)`, 'i');
+    const match = content.match(pattern);
+    return match ? match[1].trim() : '';
+  };
+  
+  // Parse Annexure I
+  result.annexure1.aims = extractSection('ANNEXURE_I_AIMS');
+  
+  const courseOutcome1 = extractSection('ANNEXURE_I_COURSE_OUTCOME');
+  result.annexure1.courseOutcome = courseOutcome1.split('\n')
+    .filter(line => line.trim())
+    .map(line => line.trim());
+  
+  result.annexure1.methodology = extractSection('ANNEXURE_I_METHODOLOGY');
+  
+  // Parse Annexure II
+  result.annexure2.rationale = extractSection('ANNEXURE_II_RATIONALE');
+  
+  const aims2 = extractSection('ANNEXURE_II_AIMS');
+  result.annexure2.aims = aims2.split('\n')
+    .filter(line => line.trim() && (line.includes('•') || line.includes('-') || /^[a-z]\)/.test(line)))
+    .map(line => line.trim());
+  
+  const courseOutcome2 = extractSection('ANNEXURE_II_COURSE_OUTCOME');
+  result.annexure2.courseOutcome = courseOutcome2.split('\n')
+    .filter(line => line.trim())
+    .map(line => line.trim());
+  
+  const literature = extractSection('ANNEXURE_II_LITERATURE');
+  const litLines = literature.split('\n').filter(l => l.trim());
+  result.annexure2.literatureIntro = litLines[0] || '';
+  result.annexure2.literaturePoints = litLines.slice(1)
+    .filter(line => line.includes('•') || line.includes('-') || line.includes(':'))
+    .map(line => line.trim());
+  
+  result.annexure2.methodology = extractSection('ANNEXURE_II_METHODOLOGY');
+  
+  const skills = extractSection('ANNEXURE_II_SKILLS');
+  result.annexure2.skills = skills.split('\n')
+    .filter(line => line.trim() && (line.includes('•') || line.includes('-')))
+    .map(line => line.trim());
+  
+  const apps = extractSection('ANNEXURE_II_APPLICATIONS');
+  result.annexure2.applications = apps.split('\n')
+    .filter(line => line.trim() && (line.includes('•') || line.includes('-')))
+    .map(line => line.trim());
+  
+  return result;
+}
+
+function mapToHeadingLevel(level: number) {
   switch (level) {
     case 1: return HeadingLevel.HEADING_1;
     case 2: return HeadingLevel.HEADING_2;
