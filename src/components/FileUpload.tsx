@@ -40,23 +40,6 @@ const FileUpload = ({ onFileSelect, selectedFile, onFileAnalysis }: FileUploadPr
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file && isValidFile(file)) {
-      onFileSelect(file);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && isValidFile(file)) {
-      onFileSelect(file);
-    }
-  };
-
   const isValidFile = (file: File) => {
     const validTypes = [
       'application/pdf',
